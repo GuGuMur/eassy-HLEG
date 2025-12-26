@@ -1,6 +1,7 @@
 import argparse
 import math
-import os, sys
+import os
+import sys
 import random
 import datetime
 import time
@@ -16,13 +17,13 @@ from torch.optim import lr_scheduler
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 import torch.optim
-import torch.multiprocessing as mp
+# import torch.multiprocessing as mp
 import torch.utils.data
 import torch.utils.data.distributed
 
 from torch.utils.tensorboard import SummaryWriter
 
-import _init_paths
+# import _init_paths
 # from dataset.get_dataset import get_datasets
 
 from utils.logger import setup_logger
@@ -42,10 +43,10 @@ def parser_args():
     parser = argparse.ArgumentParser(description='HLEG Intention Training')
     parser.add_argument('--dataname', help='dataname', default='intentonomy', choices=['intentonomy'])
     # YOUR_PATH/DataSet/Intentonomy 
-    parser.add_argument('--dataset_dir', help='dir of dataset', default='/data/sqhy_data/intent_resize/low')
+    parser.add_argument('--dataset_dir', help='dir of dataset', default='./data/sqhy_data/intent_resize/low')
     parser.add_argument('--img_size', default=224, type=int,help='size of input images')
 
-    parser.add_argument('--output', metavar='DIR', default='/data/sqhy_model/HLEG',
+    parser.add_argument('--output', metavar='DIR', default='./data/sqhy_model/HLEG',
                         help='path to output folder')
     parser.add_argument('--num_class', default=28, type=int,
                         help="Number of query slots")
@@ -192,6 +193,8 @@ def main():
         #   python -m torch.distributed.launch --nproc_per_node=8 main.py --world-size 2 --rank 1 --dist-url 'tcp://IP_OF_NODE0:FREEPORT' ...
         local_world_size = int(os.environ['WORLD_SIZE'])
         args.world_size = args.world_size * local_world_size
+        if args.local_rank is None:
+            args.local_rank = int(os.environ.get("LOCAL_RANK", 0))
         args.rank = args.rank * local_world_size + args.local_rank
         print('world size: {}, world rank: {}, local rank: {}'.format(args.world_size, args.rank, args.local_rank))
         print('os.environ:', os.environ)
@@ -479,7 +482,7 @@ def main_worker(args, logger):
 
 
 def train(train_loader, model, ema_m, criterion, optimizer, scheduler, epoch, args, logger):
-    scaler = torch.cuda.amp.GradScaler(enabled=args.amp)
+    scaler = torch.amp.GradScaler("cuda", enabled=args.amp)
     
     batch_time = AverageMeter('T', ':5.3f')
     data_time = AverageMeter('DT', ':5.3f')
@@ -623,7 +626,7 @@ def validate(val_loader, model, criterion, args, logger):
                     loss *= args.loss_dev
                 output_sm = nn.functional.sigmoid(output[0])
                 if torch.isnan(loss):
-                    saveflag = True
+                    saveflag = True  # noqa: F841
 
             # record loss
             losses.update(loss.item(), images.size(0))
@@ -797,7 +800,8 @@ class ProgressMeter(object):
         return '[' + fmt + '/' + fmt.format(num_batches) + ']'
 
 def kill_process(filename:str, holdpid:int) -> List[str]:
-    import subprocess, signal
+    import subprocess
+    import signal
     res = subprocess.check_output("ps aux | grep {} | grep -v grep | awk '{{print $2}}'".format(filename), shell=True, cwd="./")
     res = res.decode('utf-8')
     idlist = [i.strip() for i in res.split('\n') if i != '']

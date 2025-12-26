@@ -1,4 +1,4 @@
-## Learnable Hierarchical Label Embedding and Grouping for Visual Intention Understanding
+# Learnable Hierarchical Label Embedding and Grouping for Visual Intention Understanding
 
 This is the official implementation of the paper: "Learnable Hierarchical Label Embedding and Grouping for Visual Intention Understanding" accepted by IEEE Transactions on Affective Computing, 2023.
 
@@ -12,7 +12,6 @@ Visual intention understanding is to mine the potential and subjective intention
 
 ![image](https://github.com/ShiQingHongYa/HLEG/blob/main/images/results.png)
 
-
 ## Visualization
 
 ![image](https://github.com/ShiQingHongYa/HLEG/blob/main/images/visual_levels.png)
@@ -22,15 +21,37 @@ Visual intention understanding is to mine the potential and subjective intention
 Training and evaluation are as follows:
 
 ```sh
+# init
+uv sync
+source .venv/bin/activate
+
+# downloading
+uv run python ./data_utils/download_intentonomy_images.py \
+  --json ./data/intentonomy/intentonomy_train2020.json \
+         ./data/intentonomy/intentonomy_val2020.json \
+         ./data/intentonomy/intentonomy_test2020.json \
+  --output-root ./data/sqhy_data/intent_resize \
+  --skip-exist
+
+# int deprecated
+sed -i 's/np.int/int/g' /home/gugumur/eassy-HLEG/.venv/lib/python3.13/site-packages/randaugment/randaugment.py
+sed -i 's/np.float/float/g' /home/gugumur/eassy-HLEG/.venv/lib/python3.13/site-packages/randaugment/randaugment.py
+sed -i 's/np.bool/bool/g' /home/gugumur/eassy-HLEG/.venv/lib/python3.13/site-packages/randaugment/randaugment.py
+
 # training
 python -m torch.distributed.launch --nproc_per_node=2 train.py 
+# uv run python -m torch.distributed.launch --nproc_per_node=2 train.py
+uv run torchrun --nproc_per_node=1 train.py
+uv run torchrun --nproc_per_node=1 train.py --cutout --length 50 --workers 8
+
 # evaluation
 python -m torch.distributed.launch --nproc_per_node=2 eval.py
+uv run torchrun --nproc_per_node=1 eval.py
 ```
 
 ## File Structure
 
-```
+```text
 ├── HLEG
     ├── data
         ├── intentonomy
@@ -48,6 +69,7 @@ python -m torch.distributed.launch --nproc_per_node=2 eval.py
     ├── eval.py
     ├── README.md
 ```
+
 ## Reference
 
 If this work is useful to your research, please cite:

@@ -4,9 +4,9 @@ import os
 from tqdm import tqdm
 
 # intentonomy
-inte_image_path = '/data/zzy_data/intent_resize/test/low'
-inte_train_anno_path = '/data/zzy_data/intent_resize/annotations/intentonomy_train2020.json'
-inte_val_anno_path = '/data/zzy_data/intent_resize/annotations/intentonomy_test2020.json'
+inte_image_path = "./data/sqhy_data/intent_resize/low"
+inte_train_anno_path = "./data/intentonomy/intentonomy_train2020.json"
+inte_val_anno_path = "./data/intentonomy/intentonomy_test2020.json"
 
 # val/test data label transfer
 def label2vectors(int_label):

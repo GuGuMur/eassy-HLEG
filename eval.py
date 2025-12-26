@@ -1,5 +1,6 @@
 import argparse
-import os, sys
+import os
+import sys
 import random
 import datetime
 import time
@@ -16,7 +17,7 @@ import torch.optim
 import torch.utils.data
 import torch.utils.data.distributed
 
-import _init_paths
+# import _init_paths
 # from dataset.get_dataset import get_datasets
 
 from utils.logger import setup_logger
@@ -27,11 +28,11 @@ from utils.metric import voc_mAP
 from utils.misc import clean_state_dict
 from utils.slconfig import get_raw_dict
 
-from data_utils.get_dataset_new import get_datasets, CLASS_9, CLASS_15
+from data_utils.get_dataset_new import get_datasets #, CLASS_9, CLASS_15
 from data_utils.metrics import validate_f1
 
-from thop import profile
-from ptflops import get_model_complexity_info
+# from thop import profile
+# from ptflops import get_model_complexity_info
 
 def parser_args():
     available_models = ['Q2L-R101-448', 'Q2L-R101-576', 'Q2L-TResL-448', 'Q2L-TResL_22k-448', 'Q2L-SwinL-384', 'Q2L-CvT_w24-384']
@@ -39,13 +40,13 @@ def parser_args():
     parser = argparse.ArgumentParser(description='Query2Label for multilabel classification')
     parser.add_argument('--dataname', help='dataname', default='intentonomy', choices=['coco14','intentonomy'])
     # YOUR_PATH/DataSet/Intentonomy 
-    parser.add_argument('--dataset_dir', help='dir of dataset', default='/data/sqhy_data/intent_resize/low')
+    parser.add_argument('--dataset_dir', help='dir of dataset', default='./data/sqhy_data/intent_resize/low')
     parser.add_argument('--img_size', default=224, type=int,
                         help='size of input images')
 
-    parser.add_argument('--output', metavar='DIR', default='/data/sqhy_model/HLEG/test',
+    parser.add_argument('--output', metavar='DIR', default='./data/sqhy_model/HLEG/test',
                         help='path to output folder')
-    parser.add_argument('--resume', default="/data/sqhy_model/HLEG/model_best.pth.tar", type=str, metavar='PATH',
+    parser.add_argument('--resume', default="./data/sqhy_model/HLEG/model_best.pth.tar", type=str, metavar='PATH',
                         help='path to latest checkpoint (default: none)')
     parser.add_argument('--loss', metavar='LOSS', default='asl', 
                         choices=['asl'],
@@ -186,6 +187,9 @@ def main():
         #   python -m torch.distributed.launch --nproc_per_node=8 main.py --world-size 2 --rank 1 --dist-url 'tcp://IP_OF_NODE0:FREEPORT' ...
         local_world_size = int(os.environ['WORLD_SIZE'])
         args.world_size = args.world_size * local_world_size
+        if args.local_rank is None:
+            args.local_rank = int(os.environ.get("LOCAL_RANK", 0))
+
         args.rank = args.rank * local_world_size + args.local_rank
         print('world size: {}, world rank: {}, local rank: {}'.format(args.world_size, args.rank, args.local_rank))
         print('os.environ:', os.environ)
@@ -258,7 +262,7 @@ def main_worker(args, logger):
 
     # Data loading code
     train_dataset, val_dataset, test_dataset = get_datasets(args)
-    train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
+    train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)  # noqa: F841
     assert args.batch_size // dist.get_world_size() == args.batch_size / dist.get_world_size(), 'Batch size is not divisible by num of gpus.' 
     val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False)
     val_loader = torch.utils.data.DataLoader(
@@ -456,7 +460,8 @@ class ProgressMeter(object):
 
 def kill_process(filename:str, holdpid:int) -> List[str]:
      # used for training only.
-    import subprocess, signal
+    import subprocess
+    import signal
     res = subprocess.check_output("ps aux | grep {} | grep -v grep | awk '{{print $2}}'".format(filename), shell=True, cwd="./")
     res = res.decode('utf-8')
     idlist = [i.strip() for i in res.split('\n') if i != '']

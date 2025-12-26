@@ -29,7 +29,9 @@ class SLCutoutPIL(object):
             x1 = np.clip(x_c - w_cutout // 2, 0, w)
             x2 = np.clip(x_c + w_cutout // 2, 0, w)
             fill_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-            img_draw.rectangle([x1, y1, x2, y2], fill=fill_color)
+            img_draw.rectangle(
+                [min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)], fill=fill_color
+            )
 
         return x
 

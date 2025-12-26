@@ -10,7 +10,7 @@ from PIL import Image
 from utils.cutout import SLCutoutPIL
 
 # YOUR_PATH
-inte_image_path = '/data/sqhy_data/intent_resize'
+inte_image_path = './data/sqhy_data/intent_resize'
 inte_train_anno_path = './data/intentonomy/intentonomy_train2020.json'
 inte_val_anno_path = './data/intentonomy/intentonomy_val2020.json'
 inte_test_anno_path = './data/intentonomy/intentonomy_test2020.json'
